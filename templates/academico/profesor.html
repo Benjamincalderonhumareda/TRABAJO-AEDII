@@ -4,40 +4,68 @@
   <div class="page-heading">
     <a class="back-link" href="{% url 'inicio' %}">← Inicio</a>
     <div class="eyebrow">PANEL DEL PROFESOR</div>
-    <h1>Gestión académica</h1>
-    <p>Registra alumnos y temas; revisa las dudas que llegan a la cola.</p>
+    {% if seccion == "inicio" %}
+      <h1>Gestión académica</h1>
+      <p>Elige un apartado para administrar el sistema.</p>
+    {% elif seccion == "alumnos" %}
+      <h1>Alumnos</h1>
+      <p>Registra, busca y administra a los alumnos.</p>
+    {% elif seccion == "temas" %}
+      <h1>Temas a repasar</h1>
+      <p>Agrega temas y elimina cualquiera de la lista.</p>
+    {% else %}
+      <h1>Dudas pendientes</h1>
+      <p>Atiende las dudas en el orden en que llegaron.</p>
+    {% endif %}
   </div>
 
-  <section class="stats-grid">
-    <div class="stat-card"><span class="stat-number">{{ alumnos|length }}</span><span class="stat-label">Alumnos registrados</span></div>
-    <div class="stat-card"><span class="stat-number">{{ temas|length }}</span><span class="stat-label">Temas de repaso</span></div>
-    <div class="stat-card"><span class="stat-number">{{ dudas|length }}</span><span class="stat-label">Dudas pendientes</span></div>
-  </section>
-
-  <div class="content-grid">
-    <section class="panel">
-      <div class="panel-heading"><div><div class="eyebrow">LISTA SIMPLE</div><h2>Registrar alumno</h2></div></div>
-      <form method="post" class="form-stack">
-        {% csrf_token %}
-        <input type="hidden" name="accion" value="registrar_alumno">
-        {{ form_alumno.as_p }}
-        <button class="button button-primary" type="submit">Registrar alumno</button>
-      </form>
+  {% if seccion == "inicio" %}
+    <section class="stats-grid">
+      <div class="stat-card"><span class="stat-number">{{ cantidad_alumnos }}</span><span class="stat-label">Alumnos registrados</span></div>
+      <div class="stat-card"><span class="stat-number">{{ cantidad_temas }}</span><span class="stat-label">Temas de repaso</span></div>
+      <div class="stat-card"><span class="stat-number">{{ cantidad_dudas }}</span><span class="stat-label">Dudas pendientes</span></div>
     </section>
+    <div class="section-cards">
+      <a class="section-card" href="{% url 'profesor_alumnos' %}">
+        <span class="eyebrow">LISTA SIMPLE</span><h2>Gestionar alumnos</h2>
+        <p>Registrar, buscar y eliminar alumnos.</p><span class="card-arrow">Abrir apartado →</span>
+      </a>
+      <a class="section-card" href="{% url 'profesor_temas' %}">
+        <span class="eyebrow">LISTA DOBLE</span><h2>Gestionar temas</h2>
+        <p>Agregar temas y eliminar cualquier elemento.</p><span class="card-arrow">Abrir apartado →</span>
+      </a>
+      <a class="section-card" href="{% url 'profesor_dudas' %}">
+        <span class="eyebrow">COLA</span><h2>Resolver dudas</h2>
+        <p>Atender las preguntas pendientes de los alumnos.</p><span class="card-arrow">Abrir apartado →</span>
+      </a>
+    </div>
 
-    <section class="panel">
-      <div class="eyebrow">LISTA SIMPLE</div><h2>Buscar alumno</h2>
-      <form method="get" class="inline-form">
-        <label class="sr-only" for="buscar-dni">DNI del alumno</label>
-        <input id="buscar-dni" name="dni" value="{{ dni_busqueda }}" placeholder="DNI de 8 dígitos" inputmode="numeric" maxlength="8" required>
-        <button class="button button-secondary" type="submit">Buscar</button>
-      </form>
-      {% if resultado_busqueda %}
-        <div class="result-card"><strong>{{ resultado_busqueda.nombre }}</strong><span>DNI: {{ resultado_busqueda.dni }}</span><span>{{ resultado_busqueda.correo }}</span></div>
-      {% elif dni_busqueda %}
-        <p class="empty compact">No se encontró un alumno con ese DNI.</p>
-      {% endif %}
-      <div class="subheading"><h3>Alumnos</h3></div>
+  {% elif seccion == "alumnos" %}
+    <div class="content-grid">
+      <section class="panel">
+        <div class="panel-heading"><div><div class="eyebrow">LISTA SIMPLE</div><h2>Registrar alumno</h2></div></div>
+        <form method="post" class="form-stack">
+          {% csrf_token %}<input type="hidden" name="accion" value="registrar_alumno">
+          {{ form_alumno.as_p }}
+          <button class="button button-primary" type="submit">Registrar alumno</button>
+        </form>
+      </section>
+      <section class="panel">
+        <div class="eyebrow">LISTA SIMPLE</div><h2>Buscar alumno</h2>
+        <form method="get" class="inline-form">
+          <label class="sr-only" for="buscar-dni">DNI del alumno</label>
+          <input id="buscar-dni" name="dni" value="{{ dni_busqueda }}" placeholder="DNI de 8 dígitos" inputmode="numeric" maxlength="8" required>
+          <button class="button button-secondary" type="submit">Buscar</button>
+        </form>
+        {% if resultado_busqueda %}
+          <div class="result-card"><strong>{{ resultado_busqueda.nombre }}</strong><span>DNI: {{ resultado_busqueda.dni }}</span><span>{{ resultado_busqueda.correo }}</span></div>
+        {% elif dni_busqueda %}
+          <p class="empty compact">No se encontró un alumno con ese DNI.</p>
+        {% endif %}
+      </section>
+    </div>
+    <section class="panel section-panel">
+      <div class="panel-heading"><div><div class="eyebrow">REGISTRO</div><h2>Alumnos registrados ({{ alumnos|length }})</h2></div></div>
       {% if alumnos %}
         <div class="table-wrap">
           <table><thead><tr><th>Nombre</th><th>DNI</th><th>Correo</th><th></th></tr></thead>
@@ -55,34 +83,40 @@
       {% endif %}
     </section>
 
-    <section class="panel">
-      <div class="panel-heading"><div><div class="eyebrow">LISTA DOBLE</div><h2>Temas a repasar</h2></div></div>
-      <form method="post" class="form-stack">
-        {% csrf_token %}<input type="hidden" name="accion" value="registrar_tema">
-        {{ form_tema.as_p }}
-        <button class="button button-primary" type="submit">Agregar tema</button>
-      </form>
-      {% if temas %}
-        <ol class="item-list">{% for tema in temas %}
-          <li class="inline-form">
-            <span>{{ tema.nombre }}</span>
-            <form method="post">
-              {% csrf_token %}
-              <input type="hidden" name="accion" value="eliminar_tema">
-              <input type="hidden" name="tema_id" value="{{ tema.id }}">
-              <button class="button button-danger button-small" type="submit">Eliminar</button>
-            </form>
-          </li>
-        {% endfor %}</ol>
-      {% else %}
-        <p class="empty">Aún no se han agregado temas.</p>
-      {% endif %}
-    </section>
+  {% elif seccion == "temas" %}
+    <div class="content-grid">
+      <section class="panel">
+        <div class="panel-heading"><div><div class="eyebrow">LISTA DOBLE</div><h2>Agregar tema</h2></div></div>
+        <form method="post" class="form-stack">
+          {% csrf_token %}<input type="hidden" name="accion" value="registrar_tema">
+          {{ form_tema.as_p }}
+          <button class="button button-primary" type="submit">Agregar tema</button>
+        </form>
+      </section>
+      <section class="panel">
+        <div class="eyebrow">TEMARIO</div><h2>Temas registrados ({{ temas|length }})</h2>
+        {% if temas %}
+          <ol class="item-list">{% for tema in temas %}
+            <li class="inline-form">
+              <span>{{ tema.nombre }}</span>
+              <form method="post">
+                {% csrf_token %}<input type="hidden" name="accion" value="eliminar_tema">
+                <input type="hidden" name="tema_id" value="{{ tema.id }}">
+                <button class="button button-danger button-small" type="submit">Eliminar</button>
+              </form>
+            </li>
+          {% endfor %}</ol>
+        {% else %}
+          <p class="empty">Aún no se han agregado temas.</p>
+        {% endif %}
+      </section>
+    </div>
 
+  {% else %}
     <section class="panel">
-      <div class="panel-heading"><div><div class="eyebrow">COLA</div><h2>Dudas pendientes</h2></div></div>
+      <div class="panel-heading"><div><div class="eyebrow">COLA FIFO</div><h2>Dudas esperando respuesta</h2></div></div>
       {% if dudas %}
-        <ol class="item-list">{% for duda in dudas %}<li>{{ duda }}</li>{% endfor %}</ol>
+        <ol class="item-list">{% for duda in dudas %}<li>{{ duda.texto }}</li>{% endfor %}</ol>
         <form method="post">
           {% csrf_token %}<input type="hidden" name="accion" value="responder_duda">
           <button class="button button-primary" type="submit">Atender la primera duda</button>
@@ -91,5 +125,5 @@
         <p class="empty">No hay dudas pendientes.</p>
       {% endif %}
     </section>
-  </div>
+  {% endif %}
 {% endblock %}

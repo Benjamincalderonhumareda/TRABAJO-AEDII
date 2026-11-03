@@ -4,12 +4,24 @@
   <div class="page-heading">
     <a class="back-link" href="{% url 'inicio' %}">← Inicio</a>
     <div class="eyebrow">PANEL DEL ALUMNO</div>
-    {% if alumno %}
-      <h1>¡Hola, {{ alumno.nombre }}!</h1>
-      <p>Consulta los temas y comparte tus preguntas con el profesor.</p>
-    {% else %}
+    {% if not alumno %}
       <h1>Acceso de alumno</h1>
       <p>Ingresa con el DNI que registró tu profesor.</p>
+    {% elif seccion == "inicio" %}
+      <h1>¡Hola, {{ alumno.nombre }}!</h1>
+      <p>Elige un apartado para continuar.</p>
+    {% elif seccion == "temas" %}
+      <h1>Temas a repasar</h1>
+      <p>Recorre el temario hacia adelante o atrás.</p>
+    {% elif seccion == "dudas" %}
+      <h1>Enviar una duda</h1>
+      <p>Escribe tu pregunta para que el profesor pueda atenderla.</p>
+    {% elif seccion == "buscar" %}
+      <h1>Buscar alumno</h1>
+      <p>Consulta el nombre y correo de un compañero con su DNI.</p>
+    {% else %}
+      <h1>Historial de consultas atendidas</h1>
+      <p>La atención más reciente aparece arriba.</p>
     {% endif %}
   </div>
 
@@ -23,57 +35,81 @@
       </form>
       <p class="form-hint">Si aún no estás registrado, solicita al profesor que te agregue.</p>
     </section>
-  {% else %}
-    <section class="student-toolbar">
-      <span class="signed-in">Sesión iniciada como <strong>{{ alumno.nombre }}</strong></span>
-      <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="cerrar_sesion"><button class="button button-secondary" type="submit">Cerrar sesión</button></form>
-    </section>
-    <div class="content-grid student-grid">
-      <section class="panel">
-        <div class="eyebrow">LISTA DOBLE</div><h2>Temas a repasar</h2>
-        {% if tema_actual %}
-          <div class="result-card">
-            <strong>{{ tema_actual }}</strong>
-            <span>Tema {{ tema_posicion }} de {{ cantidad_temas }}</span>
-          </div>
-          <div class="inline-form">
-            <form method="post">
-              {% csrf_token %}<input type="hidden" name="accion" value="tema_anterior">
-              <button class="button button-secondary" type="submit" {% if not hay_tema_anterior %}disabled{% endif %}>← Anterior</button>
-            </form>
-            <form method="post">
-              {% csrf_token %}<input type="hidden" name="accion" value="tema_siguiente">
-              <button class="button button-secondary" type="submit" {% if not hay_tema_siguiente %}disabled{% endif %}>Siguiente →</button>
-            </form>
-          </div>
-        {% else %}<p class="empty">El profesor aún no agregó temas.</p>{% endif %}
-      </section>
-      <section class="panel">
-        <div class="eyebrow">COLA</div><h2>Enviar una duda</h2>
-        <form method="post" class="form-stack">
-          {% csrf_token %}<input type="hidden" name="accion" value="enviar_duda">
-          {{ form_duda.as_p }}
-          <button class="button button-primary" type="submit">Enviar duda</button>
-        </form>
-      </section>
-      <section class="panel">
-        <div class="eyebrow">LISTA SIMPLE</div><h2>Buscar a mi amiguito</h2>
-        <form method="post" class="inline-form">
-          {% csrf_token %}<input type="hidden" name="accion" value="buscar_alumno">
-          {{ form_dni.dni }}
-          <button class="button button-secondary" type="submit">Buscar</button>
-        </form>
-        <p class="form-hint">Busca por DNI para ver el nombre y correo de un amiguito</p>
-      </section>
-      <section class="panel">
-        <div class="panel-heading"><div><div class="eyebrow">PILA</div><h2>Historial de consultas atendidas</h2></div></div>
-        {% if historial %}
-          <ul class="item-list history-list">{% for entrada in historial %}<li>{{ entrada.numero }}. {{ entrada.texto }}</li>{% endfor %}</ul>
-          <form method="post">{% csrf_token %}<input type="hidden" name="accion" value="eliminar_historial"><button class="button button-danger" type="submit">Eliminar la última entrada</button></form>
-        {% else %}
-          <p class="empty">Aún no hay consultas atendidas.</p>
-        {% endif %}
-      </section>
+  {% elif seccion == "inicio" %}
+    <div class="section-cards student-section-cards">
+      <a class="section-card" href="{% url 'alumno_seccion' 'temas' %}">
+        <span class="eyebrow">LISTA DOBLE</span><h2>Consultar temas</h2>
+        <p>Avanza y retrocede por los temas registrados.</p><span class="card-arrow">Abrir apartado →</span>
+      </a>
+      <a class="section-card" href="{% url 'alumno_seccion' 'dudas' %}">
+        <span class="eyebrow">COLA</span><h2>Enviar una duda</h2>
+        <p>Envía una consulta al profesor.</p><span class="card-arrow">Abrir apartado →</span>
+      </a>
+      <a class="section-card" href="{% url 'alumno_seccion' 'buscar' %}">
+        <span class="eyebrow">LISTA SIMPLE</span><h2>Buscar a mi amiguito</h2>
+        <p>Busca por DNI para ver el nombre y correo de un amiguito.</p><span class="card-arrow">Abrir apartado →</span>
+      </a>
+      <a class="section-card" href="{% url 'alumno_seccion' 'historial' %}">
+        <span class="eyebrow">PILA</span><h2>Historial</h2>
+        <p>Revisa las dudas atendidas y elimina la más reciente.</p><span class="card-arrow">Abrir apartado →</span>
+      </a>
     </div>
+  {% elif seccion == "temas" %}
+    <section class="panel feature-panel">
+      <div class="eyebrow">LISTA DOBLE</div>
+      <h2>Recorrido del temario</h2>
+      {% if tema_actual %}
+        <div class="result-card">
+          <strong>{{ tema_actual }}</strong>
+          <span>Tema {{ tema_posicion }} de {{ cantidad_temas }}</span>
+        </div>
+        <div class="inline-form">
+          <form method="post">
+            {% csrf_token %}<input type="hidden" name="accion" value="tema_anterior">
+            <button class="button button-secondary" type="submit" {% if not hay_tema_anterior %}disabled{% endif %}>← Anterior</button>
+          </form>
+          <form method="post">
+            {% csrf_token %}<input type="hidden" name="accion" value="tema_siguiente">
+            <button class="button button-secondary" type="submit" {% if not hay_tema_siguiente %}disabled{% endif %}>Siguiente →</button>
+          </form>
+        </div>
+      {% else %}
+        <p class="empty">El profesor aún no agregó temas.</p>
+      {% endif %}
+    </section>
+  {% elif seccion == "dudas" %}
+    <section class="panel feature-panel">
+      <div class="eyebrow">COLA</div><h2>Escribe tu duda</h2>
+      <form method="post" class="form-stack">
+        {% csrf_token %}<input type="hidden" name="accion" value="enviar_duda">
+        {{ form_duda.as_p }}
+        <button class="button button-primary" type="submit">Enviar duda</button>
+      </form>
+    </section>
+  {% elif seccion == "buscar" %}
+    <section class="panel feature-panel">
+      <div class="eyebrow">LISTA SIMPLE</div><h2>Buscar a mi amiguito por DNI</h2>
+      <form method="post" class="inline-form">
+        {% csrf_token %}<input type="hidden" name="accion" value="buscar_alumno">
+        {{ form_dni.dni }}
+        <button class="button button-secondary" type="submit">Buscar</button>
+      </form>
+      {% if resultado_busqueda %}
+        <div class="result-card"><strong>{{ resultado_busqueda.nombre }}</strong><span>DNI: {{ resultado_busqueda.dni }}</span><span>{{ resultado_busqueda.correo }}</span></div>
+      {% endif %}
+    </section>
+  {% else %}
+    <section class="panel feature-panel">
+      <div class="eyebrow">PILA</div><h2>Historial de consultas atendidas</h2>
+      {% if historial %}
+        <ul class="item-list history-list">{% for entrada in historial %}<li>{{ entrada.numero }}. {{ entrada.texto }}</li>{% endfor %}</ul>
+        <form method="post">
+          {% csrf_token %}<input type="hidden" name="accion" value="eliminar_historial">
+          <button class="button button-danger" type="submit">Eliminar la última entrada</button>
+        </form>
+      {% else %}
+        <p class="empty">Aún no hay consultas atendidas.</p>
+      {% endif %}
+    </section>
   {% endif %}
 {% endblock %}

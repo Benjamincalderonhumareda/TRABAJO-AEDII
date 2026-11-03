@@ -39,7 +39,7 @@ No compartas ni subas los valores de `DATABASE_URL` o `DJANGO_SECRET_KEY` a GitH
 
 ## Uso y datos
 
-- En el panel del profesor puedes registrar, buscar y eliminar alumnos; ver todos los temas y eliminar cualquiera de ellos; además, puedes atender dudas.
-- En el panel del alumno inicia sesión con un DNI registrado. Desde ahí puedes recorrer los temas de uno en uno hacia adelante y atrás, buscar alumnos, enviar dudas y revisar el historial en orden de atención; eliminar la última entrada quita la duda atendida más recientemente.
+- El panel del profesor separa la gestión en apartados: alumnos (registrar, buscar y eliminar), temas (agregar y eliminar) y dudas pendientes (atender).
+- El alumno inicia sesión con un DNI registrado y accede a apartados separados para recorrer temas, enviar dudas, buscar compañeros y revisar/eliminar la duda más reciente del historial.
 - En local, alumnos, temas, dudas e historial se guardan en SQLite (`db.sqlite3`). En Render, se guardan en PostgreSQL usando la URL de Neon.
 - El panel web usa modelos de Django para persistir la información. Los temas también se cargan en una lista doble para recorrerlos y eliminar el tema seleccionado; las estructuras originales siguen disponibles en `trabajoF.py` para el programa de consola.

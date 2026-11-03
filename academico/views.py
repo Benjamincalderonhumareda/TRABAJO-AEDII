@@ -10,6 +10,19 @@ from .models import Historial as HistorialModel
 from .models import Tema as TemaModel
 
 
+PROFESOR_NAV = [
+    {"label": "Alumnos", "url": "profesor_alumnos", "seccion": "alumnos"},
+    {"label": "Temas", "url": "profesor_temas", "seccion": "temas"},
+    {"label": "Dudas pendientes", "url": "profesor_dudas", "seccion": "dudas"},
+]
+ALUMNO_NAV = [
+    {"label": "Temas", "url": "alumno_seccion", "seccion": "temas"},
+    {"label": "Enviar duda", "url": "alumno_seccion", "seccion": "dudas"},
+    {"label": "Buscar alumno", "url": "alumno_seccion", "seccion": "buscar"},
+    {"label": "Historial", "url": "alumno_seccion", "seccion": "historial"},
+]
+
+
 def _avisar_errores(request, form):
     errores = [str(error) for lista in form.errors.values() for error in lista]
     messages.error(request, " ".join(errores))
@@ -23,18 +36,18 @@ def _temas():
     return list(TemaModel.objects.order_by("id"))
 
 
-def _indice_tema_actual(request, cantidad, clave="tema_indice"):
+def _indice_tema_actual(request, cantidad):
     if cantidad == 0:
-        request.session.pop(clave, None)
+        request.session.pop("alumno_tema_indice", None)
         return None
 
     try:
-        indice = int(request.session.get(clave, 0))
+        indice = int(request.session.get("alumno_tema_indice", 0))
     except (TypeError, ValueError):
         indice = 0
 
     indice = max(0, min(indice, cantidad - 1))
-    request.session[clave] = indice
+    request.session["alumno_tema_indice"] = indice
     return indice
 
 
@@ -51,18 +64,55 @@ def _historial():
     return list(reversed(numerados))
 
 
+def _profesor_nav_context(seccion):
+    return {
+        "nav_items": PROFESOR_NAV,
+        "active_section": seccion,
+        "nav_role": "profesor",
+    }
+
+
+def _alumno_actual(request):
+    dni = request.session.get("alumno_dni")
+    alumno = AlumnoModel.objects.filter(dni=dni).first() if dni else None
+    if dni and alumno is None:
+        request.session.pop("alumno_dni", None)
+    return alumno
+
+
+def _alumno_context(alumno, seccion):
+    return {
+        "alumno": alumno,
+        "nav_items": ALUMNO_NAV if alumno else [],
+        "active_section": seccion,
+        "nav_role": "alumno",
+    }
+
+
 def inicio(request):
     return render(request, "academico/inicio.html")
 
 
 def profesor(request):
+    return render(
+        request,
+        "academico/profesor.html",
+        {
+            **_profesor_nav_context("inicio"),
+            "seccion": "inicio",
+            "cantidad_alumnos": AlumnoModel.objects.count(),
+            "cantidad_temas": TemaModel.objects.count(),
+            "cantidad_dudas": DudaModel.objects.count(),
+        },
+    )
+
+
+def profesor_alumnos(request):
     resultado_busqueda = None
     dni_busqueda = ""
-    temas = _temas()
 
     if request.method == "POST":
         accion = request.POST.get("accion")
-
         if accion == "registrar_alumno":
             form = AlumnoForm(request.POST)
             if form.is_valid():
@@ -78,8 +128,6 @@ def profesor(request):
                     messages.success(request, "Alumno registrado correctamente.")
             else:
                 _avisar_errores(request, form)
-            return redirect("profesor")
-
         elif accion == "eliminar_alumno":
             form = DniForm(request.POST)
             if form.is_valid():
@@ -92,17 +140,39 @@ def profesor(request):
                     messages.error(request, "No se encontró un alumno con ese DNI.")
             else:
                 _avisar_errores(request, form)
-            return redirect("profesor")
+        else:
+            messages.error(request, "No se reconoció la acción solicitada.")
+        return redirect("profesor_alumnos")
 
-        elif accion == "registrar_tema":
+    dni_busqueda = request.GET.get("dni", "").strip()
+    if dni_busqueda:
+        if len(dni_busqueda) == 8 and dni_busqueda.isdigit():
+            resultado_busqueda = AlumnoModel.objects.filter(dni=dni_busqueda).first()
+        else:
+            messages.error(request, "Ingresa un DNI válido de 8 dígitos.")
+
+    context = {
+        **_profesor_nav_context("alumnos"),
+        "seccion": "alumnos",
+        "alumnos": _alumnos(),
+        "form_alumno": AlumnoForm(),
+        "form_dni": DniForm(),
+        "resultado_busqueda": resultado_busqueda,
+        "dni_busqueda": dni_busqueda,
+    }
+    return render(request, "academico/profesor.html", context)
+
+
+def profesor_temas(request):
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        if accion == "registrar_tema":
             form = TemaForm(request.POST)
             if form.is_valid():
                 TemaModel.objects.create(nombre=form.cleaned_data["tema"].strip())
                 messages.success(request, "Tema agregado al plan de repaso.")
             else:
                 _avisar_errores(request, form)
-            return redirect("profesor")
-
         elif accion == "eliminar_tema":
             tema_id = request.POST.get("tema_id")
             try:
@@ -112,97 +182,113 @@ def profesor(request):
             else:
                 tema.delete()
                 messages.success(request, "Tema eliminado.")
-            return redirect("profesor")
-
-        elif accion == "responder_duda":
-            with transaction.atomic():
-                duda = DudaModel.objects.select_for_update().order_by("id").first()
-                if duda is None:
-                    messages.error(request, "No hay dudas pendientes.")
-                else:
-                    HistorialModel.objects.create(texto=f"Atendida: {duda.texto}")
-                    duda.delete()
-                    messages.success(request, f"Duda atendida: {duda.texto}")
-            return redirect("profesor")
-
         else:
             messages.error(request, "No se reconoció la acción solicitada.")
+        return redirect("profesor_temas")
 
-    elif request.method == "GET":
-        dni_busqueda = request.GET.get("dni", "").strip()
-        if dni_busqueda:
-            if len(dni_busqueda) == 8 and dni_busqueda.isdigit():
-                resultado_busqueda = AlumnoModel.objects.filter(
-                    dni=dni_busqueda
-                ).first()
-            else:
-                messages.error(request, "Ingresa un DNI válido de 8 dígitos.")
-
-    temas = _temas()
     context = {
-        "alumnos": _alumnos(),
-        "temas": temas,
-        "dudas": _dudas_pendientes(),
-        "form_alumno": AlumnoForm(),
+        **_profesor_nav_context("temas"),
+        "seccion": "temas",
+        "temas": _temas(),
         "form_tema": TemaForm(),
-        "form_dni": DniForm(),
-        "resultado_busqueda": resultado_busqueda,
-        "dni_busqueda": dni_busqueda,
     }
     return render(request, "academico/profesor.html", context)
 
 
-def alumno(request):
-    dni_sesion = request.session.get("alumno_dni")
-    alumno_actual = (
-        AlumnoModel.objects.filter(dni=dni_sesion).first() if dni_sesion else None
-    )
-    if dni_sesion and alumno_actual is None:
-        request.session.pop("alumno_dni", None)
-        dni_sesion = None
-    temas = _temas()
-    indice_tema = _indice_tema_actual(
+def profesor_dudas(request):
+    if request.method == "POST":
+        if request.POST.get("accion") != "responder_duda":
+            messages.error(request, "No se reconoció la acción solicitada.")
+            return redirect("profesor_dudas")
+
+        with transaction.atomic():
+            duda = DudaModel.objects.select_for_update().order_by("id").first()
+            if duda is None:
+                messages.error(request, "No hay dudas pendientes.")
+            else:
+                HistorialModel.objects.create(texto=f"Atendida: {duda.texto}")
+                duda.delete()
+                messages.success(request, f"Duda atendida: {duda.texto}")
+        return redirect("profesor_dudas")
+
+    return render(
         request,
-        len(temas),
-        clave="alumno_tema_indice",
+        "academico/profesor.html",
+        {
+            **_profesor_nav_context("dudas"),
+            "seccion": "dudas",
+            "dudas": _dudas_pendientes(),
+        },
     )
 
+
+def alumno(request):
+    alumno = _alumno_actual(request)
     if request.method == "POST":
         accion = request.POST.get("accion")
-
         if accion == "iniciar_sesion":
             form = DniForm(request.POST)
             if form.is_valid():
-                alumno_encontrado = AlumnoModel.objects.filter(
+                alumno = AlumnoModel.objects.filter(
                     dni=form.cleaned_data["dni"]
                 ).first()
-                if alumno_encontrado is None:
+                if alumno is None:
                     messages.error(request, "El DNI no está registrado. Pide acceso a tu profesor.")
                 else:
-                    request.session["alumno_dni"] = alumno_encontrado.dni
+                    request.session["alumno_dni"] = alumno.dni
                     return redirect("alumno")
             else:
                 _avisar_errores(request, form)
-
         elif accion == "cerrar_sesion":
             request.session.pop("alumno_dni", None)
             return redirect("alumno")
+        else:
+            messages.error(request, "No se reconoció la acción solicitada.")
 
-        elif alumno_actual is None:
-            messages.error(request, "Primero inicia sesión con un DNI registrado.")
+    return render(
+        request,
+        "academico/alumno.html",
+        {
+            **_alumno_context(alumno, "inicio" if alumno else None),
+            "seccion": "inicio",
+            "form_dni": DniForm(),
+        },
+    )
 
-        elif accion in {"tema_anterior", "tema_siguiente"}:
-            if indice_tema is None:
-                messages.error(request, "El profesor aún no agregó temas.")
-            elif accion == "tema_anterior":
-                request.session["alumno_tema_indice"] = max(0, indice_tema - 1)
+
+def alumno_seccion(request, seccion):
+    alumno = _alumno_actual(request)
+    if alumno is None:
+        messages.error(request, "Primero inicia sesión con un DNI registrado.")
+        return redirect("alumno")
+
+    secciones_validas = {"temas", "dudas", "buscar", "historial"}
+    if seccion not in secciones_validas:
+        messages.error(request, "No se encontró ese apartado.")
+        return redirect("alumno")
+
+    contexto = {
+        **_alumno_context(alumno, seccion),
+        "seccion": seccion,
+    }
+
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        if seccion == "temas" and accion in {"tema_anterior", "tema_siguiente"}:
+            cantidad = TemaModel.objects.count()
+            indice = _indice_tema_actual(request, cantidad)
+            if indice is not None and accion == "tema_anterior":
+                request.session["alumno_tema_indice"] = max(0, indice - 1)
+            elif indice is not None:
+                request.session["alumno_tema_indice"] = min(cantidad - 1, indice + 1)
+        elif seccion == "dudas" and accion == "enviar_duda":
+            form = DudaForm(request.POST)
+            if form.is_valid():
+                DudaModel.objects.create(texto=form.cleaned_data["duda"].strip())
+                messages.success(request, "Tu duda se envió a la cola del profesor.")
             else:
-                request.session["alumno_tema_indice"] = min(
-                    len(temas) - 1,
-                    indice_tema + 1,
-                )
-
-        elif accion == "buscar_alumno":
+                _avisar_errores(request, form)
+        elif seccion == "buscar" and accion == "buscar_alumno":
             form = DniForm(request.POST)
             if form.is_valid():
                 resultado = AlumnoModel.objects.filter(
@@ -217,50 +303,43 @@ def alumno(request):
                     )
             else:
                 _avisar_errores(request, form)
-
-        elif accion == "enviar_duda":
-            form = DudaForm(request.POST)
-            if form.is_valid():
-                DudaModel.objects.create(texto=form.cleaned_data["duda"].strip())
-                messages.success(request, "Tu duda se envió a la cola del profesor.")
-            else:
-                _avisar_errores(request, form)
-
-        elif accion == "eliminar_historial":
+        elif seccion == "historial" and accion == "eliminar_historial":
             eliminada = HistorialModel.objects.order_by("-id").first()
             if eliminada is None:
                 messages.error(request, "El historial está vacío.")
             else:
                 messages.success(request, f"Se eliminó del historial: {eliminada.texto}")
                 eliminada.delete()
-
         else:
             messages.error(request, "No se reconoció la acción solicitada.")
+        return redirect("alumno_seccion", seccion=seccion)
 
-        return redirect("alumno")
+    if seccion == "temas":
+        temas = _temas()
+        indice = _indice_tema_actual(request, len(temas))
+        lista_temas = structures.ListaDoble()
+        for tema in temas:
+            lista_temas.insertar_final(tema.nombre)
+        nodo_actual = (
+            lista_temas.obtener_por_indice(indice) if indice is not None else None
+        )
+        contexto.update(
+            {
+                "tema_actual": nodo_actual.dato if nodo_actual else None,
+                "tema_posicion": indice + 1 if indice is not None else 0,
+                "cantidad_temas": len(temas),
+                "hay_tema_anterior": indice is not None and indice > 0,
+                "hay_tema_siguiente": (
+                    indice is not None and indice < len(temas) - 1
+                ),
+            }
+        )
+    elif seccion == "dudas":
+        contexto["form_duda"] = DudaForm()
+    elif seccion == "buscar":
+        contexto.setdefault("resultado_busqueda", None)
+        contexto["form_dni"] = DniForm()
+    elif seccion == "historial":
+        contexto["historial"] = _historial()
 
-    lista_temas = structures.ListaDoble()
-    for tema in temas:
-        lista_temas.insertar_final(tema.nombre)
-    nodo_tema_actual = (
-        lista_temas.obtener_por_indice(indice_tema)
-        if indice_tema is not None
-        else None
-    )
-    return render(
-        request,
-        "academico/alumno.html",
-        {
-            "alumno": alumno_actual,
-            "tema_actual": nodo_tema_actual.dato if nodo_tema_actual else None,
-            "tema_posicion": indice_tema + 1 if indice_tema is not None else 0,
-            "cantidad_temas": len(temas),
-            "hay_tema_anterior": indice_tema is not None and indice_tema > 0,
-            "hay_tema_siguiente": (
-                indice_tema is not None and indice_tema < len(temas) - 1
-            ),
-            "historial": list(_historial()),
-            "form_dni": DniForm(),
-            "form_duda": DudaForm(),
-        },
-    )
+    return render(request, "academico/alumno.html", contexto)

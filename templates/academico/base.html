@@ -12,6 +12,29 @@
     <a class="brand" href="{% url 'inicio' %}"><span class="brand-mark">A</span> Aula en línea</a>
     <span class="topbar-note">Sistema académico · Estructuras de datos</span>
   </header>
+  {% if nav_items %}
+    <nav class="section-nav" aria-label="Navegación del panel">
+      <a class="nav-home" href="{% if nav_role == 'profesor' %}{% url 'profesor' %}{% else %}{% url 'alumno' %}{% endif %}">Panel</a>
+      {% for item in nav_items %}
+        {% if item.seccion %}
+          {% if nav_role == "profesor" %}
+            <a href="{% url item.url %}" {% if active_section == item.seccion %}aria-current="page"{% endif %}>{{ item.label }}</a>
+          {% else %}
+            <a href="{% url item.url item.seccion %}" {% if active_section == item.seccion %}aria-current="page"{% endif %}>{{ item.label }}</a>
+          {% endif %}
+        {% else %}
+          <a href="{% url item.url %}" {% if active_section == item.url %}aria-current="page"{% endif %}>{{ item.label }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if alumno %}
+        <span class="nav-user">{{ alumno.nombre }}</span>
+        <form method="post" action="{% url 'alumno' %}">
+          {% csrf_token %}<input type="hidden" name="accion" value="cerrar_sesion">
+          <button class="nav-logout" type="submit">Cerrar sesión</button>
+        </form>
+      {% endif %}
+    </nav>
+  {% endif %}
   <main class="page">
     {% if messages %}
       <div class="messages" aria-live="polite">
