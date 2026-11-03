@@ -1,0 +1,27 @@
+{% extends "academico/base.html" %}
+{% block title %}Inicio | Aula en línea{% endblock %}
+{% block content %}
+  <section class="hero">
+    <div class="eyebrow">SISTEMA ACADÉMICO</div>
+    <h1>Aprender también puede ser visual.</h1>
+    <p>Administra alumnos, temas de repaso y consultas desde una interfaz web sencilla.</p>
+    <div class="role-grid">
+      <a class="role-card teacher-card" href="{% url 'profesor' %}">
+        <span class="role-icon">P</span>
+        <span class="role-title">Ingresar como profesor</span>
+        <span class="role-description">Gestiona alumnos, temas y dudas pendientes.</span>
+        <span class="card-arrow">Abrir panel <span aria-hidden="true">→</span></span>
+      </a>
+      <a class="role-card student-card" href="{% url 'alumno' %}">
+        <span class="role-icon">A</span>
+        <span class="role-title">Ingresar como alumno</span>
+        <span class="role-description">Consulta temas, busca compañeros y envía dudas.</span>
+        <span class="card-arrow">Abrir panel <span aria-hidden="true">→</span></span>
+      </a>
+    </div>
+  </section>
+  <section class="structure-note">
+    <span class="eyebrow">LO QUE HAY DETRÁS</span>
+    <p>Los alumnos se organizan en una lista simple, los temas en una lista doble, las dudas en una cola y las consultas atendidas en una pila.</p>
+  </section>
+{% endblock %}

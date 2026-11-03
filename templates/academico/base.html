@@ -1,0 +1,27 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Aula en línea{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'academico/app.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{% url 'inicio' %}"><span class="brand-mark">A</span> Aula en línea</a>
+    <span class="topbar-note">Sistema académico · Estructuras de datos</span>
+  </header>
+  <main class="page">
+    {% if messages %}
+      <div class="messages" aria-live="polite">
+        {% for message in messages %}
+          <div class="message message-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">Proyecto académico · Interfaz visual con Django</footer>
+</body>
+</html>
