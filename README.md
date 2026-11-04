@@ -1,15 +1,15 @@
-# Interfaz web del sistema académico
+# Aula en línea
 
-Esta aplicación agrega una interfaz web con Django sin modificar `trabajoF.py`. El menú de terminal original sigue disponible; la interfaz carga únicamente las clases de estructuras de datos de ese archivo y no ejecuta su menú.
+Aplicación web académica desarrollada con Django. Permite al profesor administrar alumnos, temas de repaso y dudas; el alumno puede consultar temas, buscar compañeros, enviar dudas y revisar el historial.
 
 ## Requisitos
 
-- Python 3.10 o posterior
-- Django (instalación con `pip install -r requirements.txt`)
+- Python 3.10 o posterior.
+- Dependencias instaladas con `python -m pip install -r requirements.txt`.
 
-## Iniciar
+## Iniciar el proyecto (ACA LO LEVANTABA DESDE EL POWERSHELL)
 
-Desde esta carpeta, ejecuta:
+Abre PowerShell en esta carpeta y ejecuta:
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -17,29 +17,24 @@ python manage.py migrate
 python manage.py runserver 8001
 ```
 
-Después abre `http://127.0.0.1:8001/` en el navegador. Si ese puerto también está ocupado, puedes probar otro, por ejemplo `python manage.py runserver 8002`, y abrir `http://127.0.0.1:8002/`.
+Abre `http://127.0.0.1:8001/` en el navegador. Si el puerto está ocupado, cambia `8001` por otro, como `8002`.
+Cada vez que se cerraba el POWERSHELL se perdian los datos de los alumnos registrados y las dudas
+Pero ahora implementamos NEON y RENDER para no tener esas molestias
 
-## Desplegar en Render con Neon
+## Estructura de carpetas y archivos
 
-En local, Django usa `db.sqlite3` por defecto. Si se define `DATABASE_URL`, cambia automáticamente a PostgreSQL. No guardes esa URL ni la clave secreta en el repositorio.
-
-1. En Render, crea un **Web Service** conectado al repositorio de GitHub.
-2. Usa estos comandos:
-   - **Build Command:** `pip install -r requirements.txt && python manage.py collectstatic --no-input`
-   - **Start Command:** `python manage.py migrate && gunicorn config.wsgi:application`
-3. En **Environment Variables**, agrega:
-   - `DATABASE_URL`: URL de conexión de Neon, copiada de **Connect**. Usa la URL completa con SSL.
-   - `DJANGO_SECRET_KEY`: una clave secreta aleatoria. Puedes generar una localmente con `python -c "import secrets; print(secrets.token_urlsafe(50))"` y pegar el resultado directamente en Render.
-   - `DJANGO_DEBUG`: `false`.
-   - `ALLOWED_HOSTS`: el dominio de Render, por ejemplo `mi-app.onrender.com` (sin `https://`).
-   - `CSRF_TRUSTED_ORIGINS`: el origen del sitio, por ejemplo `https://mi-app.onrender.com`.
-4. Despliega. El comando de inicio ejecuta las migraciones de Django contra Neon antes de arrancar la aplicación.
-
-No compartas ni subas los valores de `DATABASE_URL` o `DJANGO_SECRET_KEY` a GitHub.
+- **`academico/`**: Contiene la aplicación académica de Django.
+  - **`forms.py`**: Define los formularios y valida los datos ingresados.
+  - **`views.py`**: Procesa las solicitudes y coordina las acciones de cada página.
+- **`config/`**: Almacena la configuración general y las rutas principales del proyecto Django.
+- **`static/`**: Contiene los archivos estáticos originales, como los estilos CSS.
+- **`staticfiles/`**: Reúne los archivos estáticos preparados para servir la aplicación.
+- **`templates/`**: Contiene las plantillas HTML que Django muestra en las páginas.
+- **`trabajoF.py`**: Estructuras de datos del trabajo, aca esta nuestro codigo original.
 
 ## Uso y datos
 
-- El panel del profesor separa la gestión en apartados: alumnos (registrar, buscar y eliminar), temas (agregar y eliminar) y dudas pendientes (atender).
-- El alumno inicia sesión con un DNI registrado y accede a apartados separados para recorrer temas, enviar dudas, buscar compañeros y revisar/eliminar la duda más reciente del historial.
-- En local, alumnos, temas, dudas e historial se guardan en SQLite (`db.sqlite3`). En Render, se guardan en PostgreSQL usando la URL de Neon.
-- El panel web usa modelos de Django para persistir la información. Los temas también se cargan en una lista doble para recorrerlos y eliminar el tema seleccionado; las estructuras originales siguen disponibles en `trabajoF.py` para el programa de consola.
+- El profesor puede registrar, buscar y eliminar alumnos; agregar o eliminar temas y atender dudas pendientes.
+- El alumno inicia sesión con un DNI registrado, consulta temas, busca compañeros, envía dudas y revisa o elimina entradas del historial.
+- Los datos de la aplicación web se guardan en la base SQLite local `db.sqlite3`; aplica los cambios del esquema con `python manage.py migrate`.
+- El menú de consola de `trabajoF.py` permanece disponible por separado.
