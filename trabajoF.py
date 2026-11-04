@@ -75,56 +75,44 @@ class ListaDoble:
             self.cola = nuevo
         self.tam += 1
 
-    def obtener_por_indice(self, indice):
-        if not isinstance(indice, int) or indice < 0:
-            return None
+#Ver tema por tema mientras el usuario quiera
+    def mostrar(self):
         p = self.cabecera
-        posicion = 0
-        while p:
-            if posicion == indice:
-                return p
-            p = p.sig
-            posicion += 1
-        return None
 
-    def _desenlazar(self, nodo):
-        if nodo.ant is None:
-            self.cabecera = nodo.sig
+        if p is None:
+            print("Aún no hay temas registrados.")
         else:
-            nodo.ant.sig = nodo.sig
+            rpta = "Si"
 
-        if nodo.sig is None:
-            self.cola = nodo.ant
-        else:
-            nodo.sig.ant = nodo.ant
-
-        self.tam -= 1
-
-    def eliminar_por_indice(self, indice):
-        nodo = self.obtener_por_indice(indice)
-        if nodo is None:
-            return False
-        self._desenlazar(nodo)
-        return True
- 
-    def mostrar(self, rpta):
-        p = self.cabecera
-        if self.cabecera is None:
-            print("Esta vacio")
-        else:
-            while p:
-                if rpta == "Si":
-                    print(f"{p.dato} <-> ", end=" ")
-                else:
-                    return
+            while rpta == "Si":
+                print(f"Tema: {p.dato}")
                 p = p.sig
-            print()
+
+                if p is None:
+                    print("No hay más temas.")
+                    break
+
+                rpta = input("¿Desea ver el siguiente tema? Si/No: ").strip().capitalize()
  
     def eliminar(self, dato):
         p = self.cabecera
+        if p is None:
+            return False
         while p:
             if dato == p.dato:
-                self._desenlazar(p)
+                if p == self.cabecera and p == self.cola:
+                    self.cabecera = None
+                    self.cola = None
+                elif p == self.cabecera:
+                    self.cabecera = self.cabecera.sig
+                    self.cabecera.ant = None
+                elif p == self.cola:
+                    self.cola = self.cola.ant
+                    self.cola.sig = None
+                else:
+                    p.ant.sig = p.sig
+                    p.sig.ant = p.ant
+                self.tam -= 1
                 return True
             p = p.sig
         return False

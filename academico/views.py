@@ -51,6 +51,22 @@ def _indice_tema_actual(request, cantidad):
     return indice
 
 
+def _nodo_tema_en_indice(lista, indice):
+    if indice < 0 or indice >= lista.tam:
+        return None
+
+    if indice <= lista.tam // 2:
+        nodo = lista.cabecera
+        for _ in range(indice):
+            nodo = nodo.sig
+        return nodo
+
+    nodo = lista.cola
+    for _ in range(lista.tam - indice - 1):
+        nodo = nodo.ant
+    return nodo
+
+
 def _dudas_pendientes():
     return list(DudaModel.objects.order_by("id"))
 
@@ -321,7 +337,9 @@ def alumno_seccion(request, seccion):
         for tema in temas:
             lista_temas.insertar_final(tema.nombre)
         nodo_actual = (
-            lista_temas.obtener_por_indice(indice) if indice is not None else None
+            _nodo_tema_en_indice(lista_temas, indice)
+            if indice is not None
+            else None
         )
         contexto.update(
             {
