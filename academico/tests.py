@@ -1,9 +1,22 @@
 from django.test import TestCase
 
+from . import structures
 from .models import Alumno, Duda, Historial, Tema
 
 
 class SistemaWebTests(TestCase):
+    def test_lista_simple_obtener_datos_devuelve_el_alumno_o_none(self):
+        lista = structures.ListaSimple()
+        lista.registrar("Ana Torres", "12345678", "ana@example.com")
+
+        alumno = lista.obtener_datos("12345678")
+        self.assertEqual(alumno.nombreC, "Ana Torres")
+        self.assertIsNone(lista.obtener_datos("87654321"))
+
+    def test_cola_y_pila_devuelven_none_cuando_estan_vacias(self):
+        self.assertIsNone(structures.ColaSimple().desencolar())
+        self.assertIsNone(structures.Pila().pop())
+
     def test_paginas_principales_se_muestran(self):
         inicio = self.client.get("/")
         panel_profesor = self.client.get("/profesor/")

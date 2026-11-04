@@ -17,17 +17,9 @@ class ListaSimple:
         nuevo = NodoSimple(nombreC, dni, correo)
         nuevo.sig = self.cabecera
         self.cabecera = nuevo
- 
-    def buscar(self, dni):
-        p = self.cabecera
-        while p:
-            if p.dni == dni:
-                return True
-            p = p.sig
-        return False
- 
-    # NUEVO: igual que buscar, pero devuelve el nodo (para mostrar sus datos)
-    def obtener(self, dni):
+
+#Es nuestro buscar
+    def obtener_datos(self, dni):
         p = self.cabecera
         while p:
             if p.dni == dni:
@@ -179,7 +171,12 @@ class Pila:
  
     def is_empty(self):
         return self.cabecera is None
- 
+
+    def mostrar(self):
+        p=self.cabecera
+        while p:
+            print(p.dato, end=" ")
+            p=p.siguiente
  
 # ==========================================
 registrar_alumno = ListaSimple()
@@ -206,42 +203,44 @@ def menu_profesor():
         if opc == "1":
             nombre = input("Nombre completo: ")
             dni = input("DNI: ")
-            while len(dni)<8:
+
+            while len(dni) != 8 or not dni.isdigit(): #dni.isdigit() si el usuario pone una letra no es valido
                 print("El DNI debe tener exactamente 8 dígitos")
                 dni=input("Ingrese nuevamente el dni: ")
                 print()
+
             correo = input("Correo: ")
             registrar_alumno.registrar(nombre, dni, correo)
-            print("  [✓] Alumno registrado con éxito.")
+            print("  Alumno registrado con éxito.")
 
         elif opc == "2":
             dni = input("Ingrese el DNI del alumno a eliminar: ")
             if registrar_alumno.eliminar(dni):
                 print("  Alumno eliminado.")
             else:
-                print("  [!] No se encontró ningún alumno con ese DNI.")
+                print(" No se encontró ningún alumno con ese DNI.")
 
         elif opc == "3":
             dni = input("Ingrese DNI a buscar: ")
-            alumno = registrar_alumno.buscar(dni)
+            alumno = registrar_alumno.obtener_datos(dni)
             if alumno:
-                print(f"  [✓] Encontrado: {alumno.nombreC} | DNI: {alumno.dni} | Correo: {alumno.correo}")
+                print(f"Encontrado: {alumno.nombreC} | DNI: {alumno.dni} | Correo: {alumno.correo}")
             else:
-                print("  [!] Alumno no registrado.")
+                print(" Alumno no registrado.")
 
         elif opc == "4":
             tema = input("Nombre del nuevo tema: ")
             registar_tema.insertar_final(tema)
-            print("  [✓] Tema agregado al plan de repaso.")
+            print("Tema agregado al plan de repaso.")
 
         elif opc == "5":
             duda = dudas_cola.desencolar()
             if duda:
                 print(f"\n  [Duda atendida]: '{duda}'")
                 historial_pila.push(f"Atendida: {duda}")
-                print("  [✓] La duda fue respondida y movida al historial (Pila).")
+                print("La duda fue respondida y movida al historial (Pila).")
             else:
-                print("  [!] No hay dudas pendientes por responder.")
+                print(" No hay dudas pendientes por responder.")
 
         elif opc == "6":
             break
@@ -252,7 +251,7 @@ def menu_profesor():
 def menu_alumno():
     print("\n--- INICIO DE SESIÓN ALUMNO ---")
     dni = input("Ingrese su DNI para verificar acceso: ")
-    alumno = registrar_alumno.buscar(dni)
+    alumno = registrar_alumno.obtener_datos(dni)
 
     if not alumno:
         print("\n  [X] El DNI ingresado no está registrado por ningún profesor. Acceso denegado.")
@@ -274,11 +273,11 @@ def menu_alumno():
 
         if opc == "1":
             dni_b = input("Ingrese DNI del alumno a consultar: ")
-            a = registrar_alumno.buscar(dni_b)
+            a = registrar_alumno.obtener_datos(dni_b)
             if a:
-                print(f"  [✓] Alumno: {a.nombreC} | Correo: {a.correo}")
+                print(f"Alumno: {a.nombreC} | Correo: {a.correo}")
             else:
-                print("  [!] No se encontró el alumno.")
+                print(" No se encontró el alumno.")
 
         elif opc == "2":
             registar_tema.mostrar()
@@ -286,17 +285,17 @@ def menu_alumno():
         elif opc == "3":
             duda = input("Escriba su duda: ")
             dudas_cola.encolar(duda)
-            print("  [✓] Duda enviada a la cola del profesor.")
+            print("Duda enviada a la cola del profesor.")
 
         elif opc == "4":
-            historial_pila.mostrar_historial()
+            historial_pila.mostrar()
 
         elif opc == "5":
             eliminada = historial_pila.pop()
             if eliminada:
-                print(f"  [✓] Se eliminó la duda más reciente del historial: '{eliminada}'")
+                print(f"Se eliminó la duda más reciente del historial: '{eliminada}'")
             else:
-                print("  [!] El historial ya está vacío.")
+                print(" El historial ya está vacío.")
 
         elif opc == "6":
             break
