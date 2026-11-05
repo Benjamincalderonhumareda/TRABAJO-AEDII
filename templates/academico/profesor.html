@@ -43,7 +43,7 @@
   {% elif seccion == "alumnos" %}
     <div class="content-grid">
       <section class="panel">
-        <div class="panel-heading"><div><div class="eyebrow">LISTA SIMPLE</div><h2>Registrar alumno</h2></div></div>
+        <div class="panel-heading"><div><div class="eyebrow"></div><h2>Registrar alumno</h2></div></div>
         <form method="post" class="form-stack">
           {% csrf_token %}<input type="hidden" name="accion" value="registrar_alumno">
           {{ form_alumno.as_p }}
