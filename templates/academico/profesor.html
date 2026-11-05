@@ -27,15 +27,15 @@
     </section>
     <div class="section-cards">
       <a class="section-card" href="{% url 'profesor_alumnos' %}">
-        <span class="eyebrow">LISTA SIMPLE</span><h2>Gestionar alumnos</h2>
+        <span class="eyebrow"></span><h2>Gestionar alumnos</h2>
         <p>Registrar, buscar y eliminar alumnos.</p><span class="card-arrow">Abrir apartado →</span>
       </a>
       <a class="section-card" href="{% url 'profesor_temas' %}">
-        <span class="eyebrow">LISTA DOBLE</span><h2>Gestionar temas</h2>
+        <span class="eyebrow"></span><h2>Gestionar temas</h2>
         <p>Agregar temas y eliminar cualquier elemento.</p><span class="card-arrow">Abrir apartado →</span>
       </a>
       <a class="section-card" href="{% url 'profesor_dudas' %}">
-        <span class="eyebrow">COLA</span><h2>Resolver dudas</h2>
+        <span class="eyebrow"></span><h2>Resolver dudas</h2>
         <p>Atender las preguntas pendientes de los alumnos.</p><span class="card-arrow">Abrir apartado →</span>
       </a>
     </div>
@@ -51,7 +51,7 @@
         </form>
       </section>
       <section class="panel">
-        <div class="eyebrow">LISTA SIMPLE</div><h2>Buscar alumno</h2>
+        <div class="eyebrow"></div><h2>Buscar alumno</h2>
         <form method="get" class="inline-form">
           <label class="sr-only" for="buscar-dni">DNI del alumno</label>
           <input id="buscar-dni" name="dni" value="{{ dni_busqueda }}" placeholder="DNI de 8 dígitos" inputmode="numeric" maxlength="8" required>
@@ -86,7 +86,7 @@
   {% elif seccion == "temas" %}
     <div class="content-grid">
       <section class="panel">
-        <div class="panel-heading"><div><div class="eyebrow">LISTA DOBLE</div><h2>Agregar tema</h2></div></div>
+        <div class="panel-heading"><div><div class="eyebrow"></div><h2>Agregar tema</h2></div></div>
         <form method="post" class="form-stack">
           {% csrf_token %}<input type="hidden" name="accion" value="registrar_tema">
           {{ form_tema.as_p }}
@@ -114,7 +114,7 @@
 
   {% else %}
     <section class="panel">
-      <div class="panel-heading"><div><div class="eyebrow">COLA FIFO</div><h2>Dudas esperando respuesta</h2></div></div>
+      <div class="panel-heading"><div><div class="eyebrow"></div><h2>Dudas esperando respuesta</h2></div></div>
       {% if dudas %}
         <ol class="item-list">{% for duda in dudas %}<li>{{ duda.texto }}</li>{% endfor %}</ol>
         <form method="post">
